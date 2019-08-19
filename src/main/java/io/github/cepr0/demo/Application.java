@@ -7,6 +7,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.*;
 import org.springframework.util.StreamUtils;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
+import java.net.URI;
 import java.nio.charset.Charset;
 
 @Slf4j
@@ -39,12 +41,21 @@ public class Application {
 		ClientHttpRequestFactory requestFactory = new BufferingClientHttpRequestFactory(new SimpleClientHttpRequestFactory());
 		return templateBuilder
 				.interceptors((request, bytes, execution) -> {
-					log.info("[i] Interceptor: invoked {} {}", request.getMethod(), request.getURI());
-					ClientHttpRequest delegate = requestFactory.createRequest(request.getURI(), request.getMethod());
-					request.getHeaders().forEach((key, values) -> values.forEach(value -> delegate.getHeaders().add(key, value)));
+					URI uri = request.getURI();
+					HttpMethod method = request.getMethod();
+
+					log.info("[i] Interceptor: requested {} {}", method, uri);
+					log.info("[i] Interceptor: request headers {}", request.getHeaders());
+
+					ClientHttpRequest delegate = requestFactory.createRequest(uri, method);
+					request.getHeaders().forEach((header, values) -> delegate.getHeaders().put(header, values));
+
 					ClientHttpResponse response = delegate.execute();
+					log.info("[i] Interceptor: response status: {}", response.getStatusCode().name());
+					log.info("[i] Interceptor: response headers: {}", response.getHeaders());
 					String body = StreamUtils.copyToString(response.getBody(), Charset.defaultCharset());
-					log.info("[i] Interceptor: response body is '{}'", body);
+					log.info("[i] Interceptor: response body: '{}'", body);
+
 					return response;
 				})
 				.rootUri("http://localhost:8080")
