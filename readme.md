@@ -9,7 +9,7 @@ public RestTemplate restTemplate(RestTemplateBuilder templateBuilder) {
       .interceptors((request, bytes, execution) -> {
          log.info("[i] Interceptor: invoked {} {}", request.getMethod(), request.getURI());
          ClientHttpRequest delegate = requestFactory.createRequest(request.getURI(), request.getMethod());
-request.getHeaders().forEach((key, values) -> values.forEach(value -> delegate.getHeaders().add(key, value)));
+         request.getHeaders().forEach((key, values) -> values.forEach(value -> delegate.getHeaders().add(key, value)));
          ClientHttpResponse response = delegate.execute();
          String body = StreamUtils.copyToString(response.getBody(), Charset.defaultCharset());
          log.info("[i] Interceptor: response body is '{}'", body);
